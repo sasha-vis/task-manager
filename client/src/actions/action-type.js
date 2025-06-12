@@ -1,0 +1,5 @@
+export const ACTION_TYPE = {
+	LOGIN: 'LOGIN',
+	LOGOUT: 'LOGOUT',
+	SET_LOADING: 'SET_LOADING',
+};

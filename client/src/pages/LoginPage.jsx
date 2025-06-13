@@ -1,10 +1,11 @@
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { Link, useNavigate } from 'react-router-dom';
 import { FaEnvelope, FaLock } from 'react-icons/fa';
 import { loginUserAsync } from '../actions';
+import { selectLoading } from '../selectors';
 
 const schema = yup.object().shape({
 	email: yup
@@ -13,7 +14,6 @@ const schema = yup.object().shape({
 		.email('Некорректный email')
 		.max(254, 'Email слишком длинный')
 		.required('Введите email'),
-
 	password: yup
 		.string()
 		.trim()
@@ -31,6 +31,7 @@ const schema = yup.object().shape({
 export const LoginPage = () => {
 	const dispatch = useDispatch();
 	const navigate = useNavigate();
+	const loading = useSelector(selectLoading);
 	const {
 		register,
 		handleSubmit,
@@ -39,13 +40,12 @@ export const LoginPage = () => {
 		resolver: yupResolver(schema),
 	});
 
-	const onSubmit = async (data) => {
-		try {
-			await dispatch(loginUserAsync(data));
-			navigate('/');
-		} catch (err) {
-			alert(err);
-		}
+	const onSubmit = (data) => {
+		dispatch(loginUserAsync(data)).then((result) => {
+			if (result.success) {
+				navigate('/');
+			}
+		});
 	};
 
 	return (
@@ -65,8 +65,8 @@ export const LoginPage = () => {
 							type="email"
 							{...register('email')}
 							className="mt-1 w-full p-2 border rounded-md focus:ring focus:ring-blue-300"
-							placeholder="Введите ваш email"
 							autoFocus
+							disabled={loading || isSubmitting}
 						/>
 						{errors.email && (
 							<p className="text-red-500 text-sm mt-1">
@@ -86,7 +86,7 @@ export const LoginPage = () => {
 							type="password"
 							{...register('password')}
 							className="mt-1 w-full p-2 border rounded-md focus:ring focus:ring-blue-300"
-							placeholder="Введите ваш пароль"
+							disabled={loading || isSubmitting}
 						/>
 						{errors.password && (
 							<p className="text-red-500 text-sm mt-1">
@@ -96,10 +96,10 @@ export const LoginPage = () => {
 					</div>
 					<button
 						type="submit"
-						className="w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-						disabled={isSubmitting}
+						className="w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-blue-400"
+						disabled={loading || isSubmitting}
 					>
-						Войти
+						{loading || isSubmitting ? 'Вход...' : 'Войти'}
 					</button>
 				</form>
 				<p className="mt-4 text-center text-sm">

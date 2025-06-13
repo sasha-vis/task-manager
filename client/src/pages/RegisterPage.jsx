@@ -1,10 +1,11 @@
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { Link, useNavigate } from 'react-router-dom';
 import { FaUser, FaEnvelope, FaLock } from 'react-icons/fa';
 import { registerUserAsync } from '../actions';
+import { selectLoading } from '../selectors';
 
 const schema = yup.object().shape({
 	name: yup
@@ -46,9 +47,16 @@ const schema = yup.object().shape({
 		.required('Подтвердите пароль'),
 });
 
+const capitalize = (value) => {
+	if (typeof value !== 'string') return value;
+	const trimmed = value.trim();
+	return trimmed.charAt(0).toUpperCase() + trimmed.slice(1).toLowerCase();
+};
+
 export const RegisterPage = () => {
 	const dispatch = useDispatch();
 	const navigate = useNavigate();
+	const loading = useSelector(selectLoading);
 	const {
 		register: formRegister,
 		handleSubmit,
@@ -57,25 +65,19 @@ export const RegisterPage = () => {
 		resolver: yupResolver(schema),
 	});
 
-	const capitalize = (value) => {
-		if (typeof value !== 'string') return value;
-		const trimmed = value.trim();
-		return trimmed.charAt(0).toUpperCase() + trimmed.slice(1).toLowerCase();
-	};
+	const onSubmit = (data) => {
+		const submitData = {
+			...data,
+			name: capitalize(data.name),
+			surname: capitalize(data.surname),
+		};
+		delete submitData.confirmPassword;
 
-	const onSubmit = async (data) => {
-		try {
-			const submitData = {
-				...data,
-				name: capitalize(data.name),
-				surname: capitalize(data.surname),
-			};
-			delete submitData.confirmPassword;
-			await dispatch(registerUserAsync(submitData));
-			navigate('/');
-		} catch (err) {
-			alert(err);
-		}
+		dispatch(registerUserAsync(submitData)).then((result) => {
+			if (result.success) {
+				navigate('/');
+			}
+		});
 	};
 
 	return (
@@ -96,8 +98,8 @@ export const RegisterPage = () => {
 								type="text"
 								{...formRegister('name')}
 								className="mt-1 w-full p-2 border rounded-md focus:ring focus:ring-blue-300"
-								placeholder="Введите ваше имя"
 								autoFocus
+								disabled={loading || isSubmitting}
 							/>
 							{errors.name && (
 								<p className="text-red-500 text-sm mt-1">
@@ -117,7 +119,7 @@ export const RegisterPage = () => {
 								type="text"
 								{...formRegister('surname')}
 								className="mt-1 w-full p-2 border rounded-md focus:ring focus:ring-blue-300"
-								placeholder="Введите вашу фамилию"
+								disabled={loading || isSubmitting}
 							/>
 							{errors.surname && (
 								<p className="text-red-500 text-sm mt-1">
@@ -138,7 +140,7 @@ export const RegisterPage = () => {
 							type="email"
 							{...formRegister('email')}
 							className="mt-1 w-full p-2 border rounded-md focus:ring focus:ring-blue-300"
-							placeholder="Введите ваш email"
+							disabled={loading || isSubmitting}
 						/>
 						{errors.email && (
 							<p className="text-red-500 text-sm mt-1">
@@ -158,7 +160,7 @@ export const RegisterPage = () => {
 							type="password"
 							{...formRegister('password')}
 							className="mt-1 w-full p-2 border rounded-md focus:ring focus:ring-blue-300"
-							placeholder="Введите ваш пароль"
+							disabled={loading || isSubmitting}
 						/>
 						{errors.password && (
 							<p className="text-red-500 text-sm mt-1">
@@ -178,7 +180,7 @@ export const RegisterPage = () => {
 							type="password"
 							{...formRegister('confirmPassword')}
 							className="mt-1 w-full p-2 border rounded-md focus:ring focus:ring-blue-300"
-							placeholder="Подтвердите ваш пароль"
+							disabled={loading || isSubmitting}
 						/>
 						{errors.confirmPassword && (
 							<p className="text-red-500 text-sm mt-1">
@@ -188,10 +190,12 @@ export const RegisterPage = () => {
 					</div>
 					<button
 						type="submit"
-						className="w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-						disabled={isSubmitting}
+						className="w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-blue-400"
+						disabled={loading || isSubmitting}
 					>
-						Зарегистрироваться
+						{loading || isSubmitting
+							? 'Регистрация...'
+							: 'Зарегистрироваться'}
 					</button>
 				</form>
 				<p className="mt-4 text-center text-sm">

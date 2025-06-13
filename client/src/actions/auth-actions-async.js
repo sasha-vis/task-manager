@@ -1,18 +1,27 @@
-import { api } from '../utils/index.js';
-import { loginUser, logoutUser, setLoading } from './auth-actions.js';
+import { api } from '../utils';
+import { loginUser, logoutUser, setLoading, setNotification } from './auth-actions';
 
 export const checkAuthAsync = () => async (dispatch) => {
 	dispatch(setLoading(true));
 	try {
-		const response = await api.get('/api/auth/me');
-
+		const response = await api.get('/auth/me');
 		const { data, error } = response.data;
-		if (error || !data) {
-			throw new Error(error || 'Ошибка аутентификации');
-		}
 
+		if (error || !data) {
+			dispatch(
+				setNotification({
+					type: 'error',
+					message: error || 'Ошибка аутентификации',
+				}),
+			);
+			return dispatch(logoutUser());
+		}
 		dispatch(loginUser(data));
-	} catch {
+	} catch (error) {
+		console.error('Ошибка проверки аутентификации:', error.message);
+		dispatch(
+			setNotification({ type: 'error', message: 'Ошибка проверки аутентификации' }),
+		);
 		dispatch(logoutUser());
 	} finally {
 		dispatch(setLoading(false));
@@ -22,16 +31,21 @@ export const checkAuthAsync = () => async (dispatch) => {
 export const loginUserAsync = (credentials) => async (dispatch) => {
 	dispatch(setLoading(true));
 	try {
-		const response = await api.post('/api/auth/login', credentials);
-
+		const response = await api.post('/auth/login', credentials);
 		const { data, error } = response.data;
-		if (error || !data) {
-			throw new Error(error || 'Ошибка авторизации');
-		}
 
+		if (error || !data) {
+			dispatch(
+				setNotification({
+					type: 'error',
+					message: error || 'Ошибка авторизации',
+				}),
+			);
+			return { success: false };
+		}
 		dispatch(loginUser(data));
-	} catch (error) {
-		console.error('Ошибка проверки авторизации:', error.message);
+		dispatch(setNotification({ type: 'success', message: 'Вход выполнен успешно' }));
+		return { success: true };
 	} finally {
 		dispatch(setLoading(false));
 	}
@@ -40,16 +54,21 @@ export const loginUserAsync = (credentials) => async (dispatch) => {
 export const registerUserAsync = (credentials) => async (dispatch) => {
 	dispatch(setLoading(true));
 	try {
-		const response = await api.post('/api/auth/register', credentials);
-
+		const response = await api.post('/auth/register', credentials);
 		const { data, error } = response.data;
-		if (error || !data) {
-			throw new Error(error || 'Ошибка регистрации');
-		}
 
+		if (error || !data) {
+			dispatch(
+				setNotification({
+					type: 'error',
+					message: error || 'Ошибка регистрации',
+				}),
+			);
+			return { success: false };
+		}
 		dispatch(loginUser(data));
-	} catch (error) {
-		console.error('Ошибка проверки авторизации:', error.message);
+		dispatch(setNotification({ type: 'success', message: 'Регистрация успешна' }));
+		return { success: true };
 	} finally {
 		dispatch(setLoading(false));
 	}
@@ -58,10 +77,13 @@ export const registerUserAsync = (credentials) => async (dispatch) => {
 export const logoutUserAsync = () => async (dispatch) => {
 	dispatch(setLoading(true));
 	try {
-		await api.post('/api/auth/logout');
+		await api.post('/auth/logout');
+
 		dispatch(logoutUser());
+		dispatch(setNotification({ type: 'success', message: 'Выход выполнен успешно' }));
 	} catch (error) {
 		console.error('Ошибка выхода:', error.message);
+		dispatch(setNotification({ type: 'error', message: 'Ошибка выхода' }));
 		dispatch(logoutUser());
 	} finally {
 		dispatch(setLoading(false));

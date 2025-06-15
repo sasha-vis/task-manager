@@ -1,7 +1,4 @@
-const ADMIN = 0;
-const USER = 1;
-
 export const ROLES = {
-	ADMIN,
-	USER,
+	ADMIN: 0,
+	USER: 1,
 };

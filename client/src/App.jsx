@@ -1,30 +1,51 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { LoginPage, RegisterPage, HomePage } from './pages';
-import { selectIsAuthenticated } from './selectors';
 import { Toaster } from 'react-hot-toast';
+import { selectAuthentication } from './selectors';
+import {
+	LoginPage,
+	RegisterPage,
+	MainPage,
+	WelcomePage,
+	ProjectsPage,
+	ProjectPage,
+	TasksPage,
+	NotFoundPage,
+	ProfilePage,
+} from './pages';
+import { LoadingSpinner, Modal } from './components';
 
-const ProtectedRoute = ({ children }) => {
-	const isAuthenticated = useSelector(selectIsAuthenticated);
-	return isAuthenticated ? children : <Navigate to="/login" />;
+const ProtectedRoute = () => {
+	const isAuthenticated = useSelector(selectAuthentication);
+
+	return isAuthenticated ? <Outlet /> : <Navigate to="/login" replace />;
 };
 
 export const App = () => {
 	return (
 		<div className="min-h-screen bg-gray-100">
 			<Toaster position="top-right" toastOptions={{ duration: 5000 }} />
+			<LoadingSpinner />
+			<Modal />
 			<Routes>
 				<Route path="/login" element={<LoginPage />} />
 				<Route path="/register" element={<RegisterPage />} />
-				<Route
-					path="/"
-					element={
-						<ProtectedRoute>
-							<HomePage />
-						</ProtectedRoute>
-					}
-				/>
-				<Route path="*" element={<Navigate to="/login" />} />
+
+				<Route element={<ProtectedRoute />}>
+					<Route element={<MainPage />}>
+						<Route path="/" element={<WelcomePage />} />
+						<Route path="profile" element={<ProfilePage />} />
+
+						<Route path="projects">
+							<Route index element={<ProjectsPage />} />
+							<Route path=":projectId" element={<ProjectPage />}>
+								<Route path="tasks" element={<TasksPage />} />
+							</Route>
+						</Route>
+					</Route>
+				</Route>
+
+				<Route path="*" element={<NotFoundPage />} />
 			</Routes>
 		</div>
 	);

@@ -1,0 +1,12 @@
+node_modules
+public
+.env
+.env.*
+.git
+.gitignore
+Dockerfile
+
+*.log
+.DS_Store
+Thumbs.db
+*.swp

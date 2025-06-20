@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+    client-builder:
+        build:
+            context: ./client
+            target: builder
+        volumes:
+            - client-dist:/app/dist
+        command: ['sleep', 'infinity']
+
+    server:
+        build:
+            context: ./server
+        ports:
+            - '${PORT}:${PORT}'
+        environment:
+            NODE_ENV: ${NODE_ENV}
+            MONGO_URL: ${MONGO_URL}
+            JWT_SECRET: ${JWT_SECRET}
+            JWT_EXPIRATION: ${JWT_EXPIRATION}
+            PORT: ${PORT}
+        volumes:
+            - client-dist:/app/public
+        depends_on:
+            - client-builder
+
+volumes:
+    client-dist:
